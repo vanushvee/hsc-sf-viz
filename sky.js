@@ -1,4 +1,4 @@
-// plate/sky.js v1.3.0 (16 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
+// plate/sky.js v1.3.1 (16 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
 // Lifted from the desk's build3D in index.html (SKY_U/SKY_GLSL 2528-2556, SKY3D/skyMaterial/placeSkyline 2610-2726) so the picture is
 // the site's, not an approximation. addSky() builds the sky sphere; loadSkyline() fetches the three meshopt glTF layers and places them
 // in their parallax groups; updateLayers() turns those groups by their share of the look.
@@ -90,7 +90,10 @@ export const skyState = { roots: {}, mats: [], time: { value: 0 }, beacon: { val
 // The usual alternative is a cylindrically billboarded quad (the "volumetric beam" shaders); a cylinder is right here because this beam is
 // meant to be a hard, coherent line, not a soft shaft of light.
 const LASER_LEN = 160;
-const LASER_TILT = 34 * Math.PI / 180;    // from vertical, so the beam sweeps a cone and crosses the sky instead of leaving the top
+// The spire's tip sits within a few percent of the top of the frame in this view, so a beam at or above horizontal leaves the picture
+// immediately — it renders, and you never see it. The sweep runs just *below* horizontal instead: 96 degrees off vertical, six below, so
+// the beam rakes across the city and the bay and stays in shot while it turns.
+const LASER_TILT = 96 * Math.PI / 180;
 const LASER_TURN = 14;                    // seconds for one revolution about the spire
 const LASER_UP = new THREE.Vector3(0, 1, 0), LASER_DIR = new THREE.Vector3();
 function beamMaterial(core){
@@ -134,12 +137,14 @@ function addLaser(){
   let spire = null;
   root.traverse(o => { if (!spire && /pyramid_spire/.test(o.name)) spire = o; });
   if (!spire) return;
-  root.updateMatrixWorld(true);
+  // The layer group's matrixWorld is only composed at the first render, and this runs before it: updating the root alone leaves the group's
+  // own transform stale, so worldToLocal kept the eye's offset and the beam started a metre above the spire. Update from the group down.
+  fg.updateMatrixWorld(true);
   const at = fg.worldToLocal(new THREE.Vector3().setFromMatrixPosition(spire.matrixWorld));
   const beam = new THREE.Group();
   beam.position.copy(at);
   beam.quaternion.setFromUnitVectors(LASER_UP, LASER_DIR.set(0, 1, 0));
-  for (const [r, core] of [[0.013, true], [0.085, false]]) {
+  for (const [r, core] of [[0.013, true], [0.062, false]]) {
     const g = new THREE.CylinderGeometry(r, r * 1.35, LASER_LEN, 12, 1, true);
     g.translate(0, LASER_LEN / 2, 0);                                     // base at the emitter
     const m = new THREE.Mesh(g, beamMaterial(core));
@@ -153,16 +158,23 @@ function addLaser(){
 
 // The beam turns about the spire, one revolution every 14 s, and its brightness is the beacon's: it comes up with the flash and fades as the
 // flash decays, so each blink shows a fresh arc of the sweep. That is a lighthouse, and it is what the Pyramid's light wants to be.
-export function updateLaser(t, level){
-  skyState.laser.value = level;
-  skyState.laserTime.value = t;
+const _base = new THREE.Vector3(), _toCam = new THREE.Vector3();
+export function updateLaser(t, level, cam){
   const b = skyState.beam;
-  if (!b) return;
-  b.visible = level > 0.0015;
-  if (!b.visible) return;
+  if (!b) { skyState.laser.value = 0; return; }
   const az = t * (Math.PI * 2) / LASER_TURN;
   LASER_DIR.set(Math.sin(LASER_TILT) * Math.sin(az), Math.cos(LASER_TILT), -Math.sin(LASER_TILT) * Math.cos(az));
   b.quaternion.setFromUnitVectors(LASER_UP, LASER_DIR);
+  // Seen end-on — the sweep pointing at the eye — a laser is a smear across the frame rather than a beam, so it dims as it comes round to
+  // you and comes back up as it leaves. The same read as a lighthouse turning past the window.
+  if (cam) {
+    b.getWorldPosition(_base);
+    const facing = LASER_DIR.dot(_toCam.copy(cam).sub(_base).normalize());
+    level *= 1 - 0.94 * THREE.MathUtils.smoothstep(facing, 0.72, 0.99);
+  }
+  skyState.laser.value = level;
+  skyState.laserTime.value = t;
+  b.visible = level > 0.0015;
 }
 
 

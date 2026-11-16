@@ -266,7 +266,7 @@ let last = 0, frames = 0, msAcc = 0, msN = 0;
 function render(t){
   skyState.time.value = t;
   updateBeacon(t);
-  updateLaser(t, P.laser * skyState.beacon.value);   // the beam rides the beacon: it comes up with the flash and fades with it
+  updateLaser(t, P.laser * skyState.beacon.value, camera.position);   // rides the beacon; dims when the sweep comes at the eye
   finalPass.uniforms.uTime.value = t;
   for (const m of skyState.mats) if (m.uniforms.uPx) m.uniforms.uPx.value = P.dpr;
   placeCamera(t);
