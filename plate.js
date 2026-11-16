@@ -1,4 +1,4 @@
-// plate/plate.js v1.1.0 (15 Nov 2026): the projector plate — the site's scene with nothing of the page on it.
+// plate/plate.js v1.2.0 (15 Nov 2026): the projector plate — the site's scene with nothing of the page on it.
 //   ?scene=desk (default): the room, the desk with its keyboard, the in-tray, the lamp and the Macintosh with its screen dark, at the
 //                          site's seated view, panning slowly left and right.
 //   ?scene=sky:            just the view out of the window, for a clean skyline plate.
@@ -16,6 +16,7 @@
 //   flare, bar           the lens flare, 0..100 (40), and its vertical bar element, 0..0.5 (0).
 //   bloom, exposure, vig, grain   post: 0.32, 0.72, 0.28, 0.035.
 //   haze                 multiplies the skyline's per-layer haze density (3.5; the site runs 1).
+//   laser                0..100: a laser off the Pyramid's spire, 0 = off (the default).
 //   birds, bird          the flock's size (130) and the birds' colour (#ece7dc).
 //   dpr, w, h            render density, and a forced render size for stills.
 //   fps, t, still=1, hud=1, sun=0   frame cap (60), start time, one frame and stop, readout, no sun.
@@ -46,6 +47,7 @@ const P = {
   back: num('back', 0.3),                                       // metres the eye sits back from the site's seat (0 = the seat)
   screen: QS.get('screen') || '#050506', screenLight: Math.max(0, num('screenlight', 1.2)),
   haze: Math.max(0, num('haze', 3.5)),   // multiplies the skyline's per-layer haze density
+  laser: Math.max(0, Math.min(100, num('laser', 0))) / 100,   // 0..100: the beam off the Pyramid, 0 = off
   birds: Math.max(0, Math.round(num('birds', 130))),   // the flock over the city; 0 is none
   birdTone: QS.get('bird') || '#ece7dc',                 // the birds' colour: cockatoo white by default (was a dark silhouette)
   glass: Math.max(0, num('glass', 1)),   // how much window is on the pane: tint, sheen, smudges, dust (0 = clean)
@@ -263,6 +265,9 @@ const budget = P.fps ? 1000 / P.fps : 0;
 let last = 0, frames = 0, msAcc = 0, msN = 0;
 function render(t){
   skyState.time.value = t;
+  skyState.laser.value = P.laser;
+  skyState.laserTime.value = t;
+  if (skyState.beam) skyState.beam.visible = P.laser > 0;
   updateBeacon(t);
   finalPass.uniforms.uTime.value = t;
   for (const m of skyState.mats) if (m.uniforms.uPx) m.uniforms.uPx.value = P.dpr;

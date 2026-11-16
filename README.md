@@ -1,4 +1,4 @@
-# hsc-sf-viz <!-- v1.1.0 (15 Nov 2026) -->
+# hsc-sf-viz <!-- v1.2.0 (15 Nov 2026) -->
 
 The site's scene with nothing of the page on it, for a projector (or a TouchDesigner Web Render TOP).
 
@@ -39,6 +39,7 @@ lifted from the desk scene in the hscompute.com repo, with the line numbers in t
 | `back` | `0.30` | metres the eye sits back from the site's seat. `0` is the seat itself (nearly at the glass); `0.7` stands back in the room with two mullions in frame. |
 | `parallax` | `0.20` | metres the eye dollies sideways per cycle, across the window. This is the motion: the eye travels instead of turning, so the near city slides against the far shore. `0` is a still frame. |
 | `pan`, `panTime` | `0`, `82` | `panTime` is seconds per cycle; `pan` adds the old head-turn (degrees either side) on top of the dolly. |
+| `laser` | `0` | **0–100**: a laser off the Pyramid's spire, up and away over the bay. Off by default. |
 | `birds` | `130` | how many birds in the flock over the city; `0` is none. |
 | `glass` | `1` | how much window is on the pane; `0` is a clean opening. |
 | `dirty` | `50` | **0–100**: how dirty the pane is. `0` is freshly cleaned, `50` is the pane as drawn, `100` is a window nobody has touched since the building opened. |

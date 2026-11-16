@@ -1,4 +1,4 @@
-// plate/sky.js v1.0.0 (15 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
+// plate/sky.js v1.1.0 (15 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
 // Lifted from the desk's build3D in index.html (SKY_U/SKY_GLSL 2528-2556, SKY3D/skyMaterial/placeSkyline 2610-2726) so the picture is
 // the site's, not an approximation. addSky() builds the sky sphere; loadSkyline() fetches the three meshopt glTF layers and places them
 // in their parallax groups; updateLayers() turns those groups by their share of the look.
@@ -81,7 +81,74 @@ const SKY3D = {
   'skyline-mg': { layer: 'midground',  dens: 0.014, emi: 1.4, amb: 0.53 },   // the low city out to 54 units: up to half haze
   'skyline-bg': { layer: 'background', dens: 0.009, emi: 1.3, amb: 0.52 }    // Marin and the far shore at 100+ units: mostly haze
 };
-export const skyState = { roots: {}, mats: [], time: { value: 0 }, beacon: { value: 0 } };
+export const skyState = { roots: {}, mats: [], time: { value: 0 }, beacon: { value: 0 }, laser: { value: 0 }, laserTime: { value: 0 } };
+
+// ---------- The laser off the Pyramid's spire ----------
+// A laser beam is not a volumetric shaft: on camera it is a very thin, very hot core, a narrow halo of scatter round it, and almost nothing
+// else. So: two nested additive cylinders — a core and a glow — with the brightness falling off toward the tube's silhouette (the middle of
+// a tube, seen from the side, is the surface facing you), fading along its length, and pushed well over 1.0 so the bloom chain does the rest.
+// The usual alternative is a cylindrically billboarded quad (the "volumetric beam" shaders); a cylinder is right here because this beam is
+// meant to be a hard, coherent line, not a soft shaft of light.
+const LASER_DIR = new THREE.Vector3(-0.52, 0.80, -0.30).normalize();   // up and away over the bay, so it crosses the sky
+const LASER_LEN = 160;
+function beamMaterial(core){
+  return new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+    uniforms: {
+      uColor: { value: new THREE.Color('#63ffa8') },
+      uGain: { value: core ? 9.0 : 1.15 },       // over 1.0 on purpose: bloom picks the core up
+      uSharp: { value: core ? 7.0 : 2.2 },       // how tight the tube's radial falloff is
+      uLen: { value: LASER_LEN },
+      uLaser: skyState.laser, uTime: skyState.laserTime
+    },
+    vertexShader: [
+      'varying vec3 vN, vW; varying vec2 vUv;',
+      'void main(){ vUv = uv; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(modelMatrix) * normal);',
+      '  gl_Position = projectionMatrix * viewMatrix * w; }'
+    ].join('\n'),
+    fragmentShader: [
+      'uniform vec3 uColor; uniform float uGain, uSharp, uLen, uLaser, uTime;',
+      'varying vec3 vN, vW; varying vec2 vUv;',
+      'void main(){',
+      '  if (uLaser <= 0.001) discard;',
+      '  vec3 v = normalize(cameraPosition - vW);',
+      // radial: 1 looking straight down the tube, 0 at its silhouette, so the beam reads solid in the middle and melts at the edges
+      '  float radial = pow(abs(dot(normalize(vN), v)), uSharp);',
+      // along: quick loss out of the emitter, then a long tail that dies before the tip
+      '  float along = vUv.y;',
+      '  float fade = exp(-along * 1.45) * smoothstep(1.0, 0.82, along);',
+      '  float out0 = smoothstep(0.0, 0.004, along);',                       // no hard disc where it leaves the spire
+      // a little life: a fast flicker and a slow shimmer down the beam, both tiny
+      '  float flick = 0.94 + 0.06 * sin(uTime * 41.0) + 0.03 * sin(uTime * 7.1 + along * 9.0);',
+      '  float c = radial * fade * out0 * flick * uGain * uLaser;',
+      '  gl_FragColor = vec4(uColor * c, c);',
+      '}'
+    ].join('\n')
+  });
+}
+function addLaser(){
+  const fg = LAYERS.find(l => l.id === 'foreground').group, root = skyState.roots['skyline-fg'];
+  if (!fg || !root) return;
+  let spire = null;
+  root.traverse(o => { if (!spire && /pyramid_spire/.test(o.name)) spire = o; });
+  if (!spire) return;
+  root.updateMatrixWorld(true);
+  const at = fg.worldToLocal(new THREE.Vector3().setFromMatrixPosition(spire.matrixWorld));
+  const beam = new THREE.Group();
+  beam.position.copy(at);
+  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), LASER_DIR.clone());
+  for (const [r, core] of [[0.013, true], [0.085, false]]) {
+    const g = new THREE.CylinderGeometry(r, r * 1.35, LASER_LEN, 12, 1, true);
+    g.translate(0, LASER_LEN / 2, 0);                                     // base at the emitter
+    const m = new THREE.Mesh(g, beamMaterial(core));
+    m.frustumCulled = false; m.renderOrder = -8.2; m.name = 'laser';
+    beam.add(m);
+  }
+  beam.name = 'laser-beam'; beam.visible = false;
+  fg.add(beam);
+  skyState.beam = beam;
+}
+
 
 // The Pyramid's beacon: one flash every 10 to 15 seconds, the gap drawn uniformly and never the same twice. A quick rise (0.10 s) into a
 // hot core, then a slower fall (about 1.1 s), so it reads as a flare rather than a switch. The gaps come from a hashed cycle index, so the
@@ -145,14 +212,25 @@ function skyMaterial(src, cfg, water, hasUv, haze){
       '    vec3 w = mix(washed, deep, t);',
       '    w = mix(w, mix(vec3(dot(w, LUM)), w, 0.4) * 1.32 + hz * 0.07, far * 0.75);',
       '    vec2 Pp = vW.xz;',
-      '    float r1 = vnoise(Pp * vec2(1.6, 4.0) + vec2(uTime * 0.05, uTime * 0.11));',
-      '    float r2 = vnoise(Pp * vec2(5.0, 11.0) - vec2(uTime * 0.09, uTime * 0.04));',
-      '    float rip = (r1 * 0.6 + r2 * 0.4) - 0.5;',
-      '    float calm = mix(1.0, 0.35, far);',
-      '    w *= 1.0 + rip * 0.42 * calm;',
+      // The ripples drift at 0.05 world units a second in the site's shader, which at 90 to 180 metres is under one noise cell per ten
+      // seconds — on the plate the bay read as frozen, because it is also about 70 % hazed out at that distance. Six times faster, coarser
+      // and less damped with distance, so the bay visibly moves.
+      // The water is 100 to 180 metres away here: a two-metre swell is under a pixel and aliases into noise, which is why the bay looked
+      // frozen however fast the noise drifted. These are tens of metres across, so the bands actually land on screen.
+      '    float r1 = vnoise(Pp * vec2(0.032, 0.070) + vec2(uTime * 6.00, uTime * 3.20));',
+      '    float r2 = vnoise(Pp * vec2(0.085, 0.175) - vec2(uTime * 9.00, uTime * 4.60));',
+      '    float rip = (r1 * 0.65 + r2 * 0.35) - 0.5;',
+      '    float calm = mix(1.0, 0.62, far);',
+      '    w *= 1.0 + rip * 0.95 * calm;',
       '    float glint = exp(-pow((az + 18.0) / 14.0, 2.0)) * exp(-pow((el + 0.8) / 0.8, 2.0)) * (1.0 - t);',
-      '    float sparkle = smoothstep(0.52, 0.86, r1 * 0.5 + r2 * 0.5 + 0.12 * calm);',
-      '    c = w + hz * glint * (0.45 + 2.1 * sparkle);',
+      '    float sparkle = smoothstep(0.46, 0.84, r1 * 0.5 + r2 * 0.5 + 0.12 * calm);',
+      // The visible bay at this distance is the *dark* side of the water, where a percentage modulation of near-black cannot be seen: what
+      // moves on screen is the lit band along the shore. So the glint and its sparkle breathe, on the same drifting noise.
+      '    float shimmer = 0.35 + 1.00 * vnoise(vec2(Pp.x * 0.035 + uTime * 5.4, Pp.y * 0.035 - uTime * 2.4));',
+            // A percentage modulation of near-black is invisible, and most of the bay we see here is the deep side. What a real bay does at dusk is
+      // put moving glints on that dark water — city light and sky, broken up by the swell — so add them, on the same drifting noise.
+      '    float deepGlints = smoothstep(0.70, 0.93, r2 * 0.65 + r1 * 0.35) * (0.35 + 0.65 * t);',
+      '    c = w + hz * glint * (0.45 + 2.1 * sparkle) * shimmer + hz * deepGlints * 0.55;',
       '  }',
       '  gl_FragColor = vec4(c, 1.0);',
       '  #include <tonemapping_fragment>',
@@ -209,4 +287,5 @@ export async function loadSkyline(dpr, haze){
   await MeshoptDecoder.ready;
   const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   await Promise.all(Object.keys(SKY3D).map(name => loader.loadAsync('./models/' + name + '.glb').then(g => placeSkyline(name, g, dpr, haze))));
+  addLaser();
 }

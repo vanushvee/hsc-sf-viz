@@ -46,6 +46,7 @@ stills/        two rendered plates, for a poster or a fallback
 ?panTime=82        seconds per cycle
 ?back=0.3          metres the eye sits back from the site's seat
 ?dirty=0..100      how dirty the pane is        ?flare=0..100   the lens flare
+?laser=0..100     the beam off the Pyramid, 0 = off (default)
 ?birds=130         the flock's size, 0 = none   ?bird=%23ece7dc the birds' colour
 ?haze=3.5          the skyline's per-layer haze density
 ?still=1&t=42      one deterministic frame      ?hud=1          fps and resolution
