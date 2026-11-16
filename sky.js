@@ -1,4 +1,4 @@
-// plate/sky.js v1.2.1 (16 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
+// plate/sky.js v1.3.0 (16 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
 // Lifted from the desk's build3D in index.html (SKY_U/SKY_GLSL 2528-2556, SKY3D/skyMaterial/placeSkyline 2610-2726) so the picture is
 // the site's, not an approximation. addSky() builds the sky sphere; loadSkyline() fetches the three meshopt glTF layers and places them
 // in their parallax groups; updateLayers() turns those groups by their share of the look.
@@ -89,8 +89,10 @@ export const skyState = { roots: {}, mats: [], time: { value: 0 }, beacon: { val
 // a tube, seen from the side, is the surface facing you), fading along its length, and pushed well over 1.0 so the bloom chain does the rest.
 // The usual alternative is a cylindrically billboarded quad (the "volumetric beam" shaders); a cylinder is right here because this beam is
 // meant to be a hard, coherent line, not a soft shaft of light.
-const LASER_DIR = new THREE.Vector3(-0.52, 0.80, -0.30).normalize();   // up and away over the bay, so it crosses the sky
 const LASER_LEN = 160;
+const LASER_TILT = 34 * Math.PI / 180;    // from vertical, so the beam sweeps a cone and crosses the sky instead of leaving the top
+const LASER_TURN = 14;                    // seconds for one revolution about the spire
+const LASER_UP = new THREE.Vector3(0, 1, 0), LASER_DIR = new THREE.Vector3();
 function beamMaterial(core){
   return new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
@@ -136,7 +138,7 @@ function addLaser(){
   const at = fg.worldToLocal(new THREE.Vector3().setFromMatrixPosition(spire.matrixWorld));
   const beam = new THREE.Group();
   beam.position.copy(at);
-  beam.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), LASER_DIR.clone());
+  beam.quaternion.setFromUnitVectors(LASER_UP, LASER_DIR.set(0, 1, 0));
   for (const [r, core] of [[0.013, true], [0.085, false]]) {
     const g = new THREE.CylinderGeometry(r, r * 1.35, LASER_LEN, 12, 1, true);
     g.translate(0, LASER_LEN / 2, 0);                                     // base at the emitter
@@ -147,6 +149,20 @@ function addLaser(){
   beam.name = 'laser-beam'; beam.visible = false;
   fg.add(beam);
   skyState.beam = beam;
+}
+
+// The beam turns about the spire, one revolution every 14 s, and its brightness is the beacon's: it comes up with the flash and fades as the
+// flash decays, so each blink shows a fresh arc of the sweep. That is a lighthouse, and it is what the Pyramid's light wants to be.
+export function updateLaser(t, level){
+  skyState.laser.value = level;
+  skyState.laserTime.value = t;
+  const b = skyState.beam;
+  if (!b) return;
+  b.visible = level > 0.0015;
+  if (!b.visible) return;
+  const az = t * (Math.PI * 2) / LASER_TURN;
+  LASER_DIR.set(Math.sin(LASER_TILT) * Math.sin(az), Math.cos(LASER_TILT), -Math.sin(LASER_TILT) * Math.cos(az));
+  b.quaternion.setFromUnitVectors(LASER_UP, LASER_DIR);
 }
 
 

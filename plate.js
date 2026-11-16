@@ -27,7 +27,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { DEG, PAL, EYE, SUN, col, addSky, addLayers, updateLayers, loadSkyline, skyState, updateBeacon, SKY_U } from './sky.js';
+import { DEG, PAL, EYE, SUN, col, addSky, addLayers, updateLayers, loadSkyline, skyState, updateBeacon, updateLaser, SKY_U } from './sky.js';
 import { buildDesk } from './desk.js';
 import { createFlock } from './birds.js';
 
@@ -265,10 +265,8 @@ const budget = P.fps ? 1000 / P.fps : 0;
 let last = 0, frames = 0, msAcc = 0, msN = 0;
 function render(t){
   skyState.time.value = t;
-  skyState.laser.value = P.laser;
-  skyState.laserTime.value = t;
-  if (skyState.beam) skyState.beam.visible = P.laser > 0;
   updateBeacon(t);
+  updateLaser(t, P.laser * skyState.beacon.value);   // the beam rides the beacon: it comes up with the flash and fades with it
   finalPass.uniforms.uTime.value = t;
   for (const m of skyState.mats) if (m.uniforms.uPx) m.uniforms.uPx.value = P.dpr;
   placeCamera(t);
