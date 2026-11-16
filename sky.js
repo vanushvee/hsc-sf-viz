@@ -1,4 +1,4 @@
-// plate/sky.js v1.1.0 (15 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
+// plate/sky.js v1.2.0 (15 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
 // Lifted from the desk's build3D in index.html (SKY_U/SKY_GLSL 2528-2556, SKY3D/skyMaterial/placeSkyline 2610-2726) so the picture is
 // the site's, not an approximation. addSky() builds the sky sphere; loadSkyline() fetches the three meshopt glTF layers and places them
 // in their parallax groups; updateLayers() turns those groups by their share of the look.
@@ -211,26 +211,26 @@ function skyMaterial(src, cfg, water, hasUv, haze){
       '    vec3 washed = mix(vec3(dot(hz, LUM)), hz, 0.55) * 0.82;',
       '    vec3 w = mix(washed, deep, t);',
       '    w = mix(w, mix(vec3(dot(w, LUM)), w, 0.4) * 1.32 + hz * 0.07, far * 0.75);',
-      '    vec2 Pp = vW.xz;',
-      // The ripples drift at 0.05 world units a second in the site's shader, which at 90 to 180 metres is under one noise cell per ten
-      // seconds — on the plate the bay read as frozen, because it is also about 70 % hazed out at that distance. Six times faster, coarser
-      // and less damped with distance, so the bay visibly moves.
-      // The water is 100 to 180 metres away here: a two-metre swell is under a pixel and aliases into noise, which is why the bay looked
-      // frozen however fast the noise drifted. These are tens of metres across, so the bands actually land on screen.
-      '    float r1 = vnoise(Pp * vec2(0.032, 0.070) + vec2(uTime * 6.00, uTime * 3.20));',
-      '    float r2 = vnoise(Pp * vec2(0.085, 0.175) - vec2(uTime * 9.00, uTime * 4.60));',
-      '    float rip = (r1 * 0.65 + r2 * 0.35) - 0.5;',
-      '    float calm = mix(1.0, 0.62, far);',
-      '    w *= 1.0 + rip * 0.95 * calm;',
-      '    float glint = exp(-pow((az + 18.0) / 14.0, 2.0)) * exp(-pow((el + 0.8) / 0.8, 2.0)) * (1.0 - t);',
-      '    float sparkle = smoothstep(0.46, 0.84, r1 * 0.5 + r2 * 0.5 + 0.12 * calm);',
-      // The visible bay at this distance is the *dark* side of the water, where a percentage modulation of near-black cannot be seen: what
-      // moves on screen is the lit band along the shore. So the glint and its sparkle breathe, on the same drifting noise.
-      '    float shimmer = 0.35 + 1.00 * vnoise(vec2(Pp.x * 0.035 + uTime * 5.4, Pp.y * 0.035 - uTime * 2.4));',
-            // A percentage modulation of near-black is invisible, and most of the bay we see here is the deep side. What a real bay does at dusk is
-      // put moving glints on that dark water — city light and sky, broken up by the swell — so add them, on the same drifting noise.
-      '    float deepGlints = smoothstep(0.70, 0.93, r2 * 0.65 + r1 * 0.35) * (0.35 + 0.65 * t);',
-      '    c = w + hz * glint * (0.45 + 2.1 * sparkle) * shimmer + hz * deepGlints * 0.55;',
+      // ripples (the site's, Lashan 9 Oct 22:37: "less flat ... a little more of a gradient and texture"): two drifting octaves of noise
+      // on the water plane, a little stronger and coarser near, finer and calmer far; they shade the water and break the glint into sparkles.
+      // Restored verbatim after a detour that made them tens of metres across with extra glints — that moved, but it was not this water.
+      // The one change is the drift rate: the site moves the noise 0.05 and 0.09 world units a second, which at 100 to 180 metres is under
+      // one noise cell per ten seconds and reads as motionless here. Six times faster, same pattern, same amplitudes.
+      '    vec2 P = vW.xz;',
+      '    float r1 = vnoise(P * vec2(1.6, 4.0) + vec2(uTime * 0.30, uTime * 0.66));',
+      '    float r2 = vnoise(P * vec2(5.0, 11.0) - vec2(uTime * 0.54, uTime * 0.24));',
+      '    float rip = (r1 * 0.6 + r2 * 0.4) - 0.5;',
+      '    float calm = mix(1.0, 0.35, far);',
+      '    w *= 1.0 + rip * 0.42 * calm;',
+      // The glint is the only part of this water bright enough to show movement at this distance, so it is the part that is animated: the
+      // highlight slides a little as the swell turns and brightens and dims as it catches and loses the sun. The water's pattern, colours
+      // and amplitudes stay the site's.
+      '    float gslide = 1.9 * sin(uTime * 0.55) + 0.7 * sin(uTime * 1.7 + 2.0);',
+      '    float gbreathe = 0.80 + 0.32 * sin(uTime * 0.9 + 1.1);',
+      '    float glint = exp(-pow((az + 18.0 + gslide) / 14.0, 2.0)) * exp(-pow((el + 0.8 + gslide * 0.22) / 0.8, 2.0)) * (1.0 - t);',
+      '    glint *= gbreathe;',
+      '    float sparkle = smoothstep(0.52, 0.86, r1 * 0.5 + r2 * 0.5 + 0.12 * calm);',
+      '    c = w + hz * glint * (0.45 + 2.1 * sparkle);',
       '  }',
       '  gl_FragColor = vec4(c, 1.0);',
       '  #include <tonemapping_fragment>',
