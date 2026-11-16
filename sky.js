@@ -1,4 +1,4 @@
-// plate/sky.js v1.2.0 (15 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
+// plate/sky.js v1.2.1 (16 Nov 2026): the window's outside — the dusk sky shader, the sun, and the three skyline layers.
 // Lifted from the desk's build3D in index.html (SKY_U/SKY_GLSL 2528-2556, SKY3D/skyMaterial/placeSkyline 2610-2726) so the picture is
 // the site's, not an approximation. addSky() builds the sky sphere; loadSkyline() fetches the three meshopt glTF layers and places them
 // in their parallax groups; updateLayers() turns those groups by their share of the look.
@@ -215,18 +215,18 @@ function skyMaterial(src, cfg, water, hasUv, haze){
       // on the water plane, a little stronger and coarser near, finer and calmer far; they shade the water and break the glint into sparkles.
       // Restored verbatim after a detour that made them tens of metres across with extra glints — that moved, but it was not this water.
       // The one change is the drift rate: the site moves the noise 0.05 and 0.09 world units a second, which at 100 to 180 metres is under
-      // one noise cell per ten seconds and reads as motionless here. Six times faster, same pattern, same amplitudes.
+      // one noise cell per ten seconds and reads as motionless here. 6.9 times faster, same pattern, same amplitudes.
       '    vec2 P = vW.xz;',
-      '    float r1 = vnoise(P * vec2(1.6, 4.0) + vec2(uTime * 0.30, uTime * 0.66));',
-      '    float r2 = vnoise(P * vec2(5.0, 11.0) - vec2(uTime * 0.54, uTime * 0.24));',
+      '    float r1 = vnoise(P * vec2(1.6, 4.0) + vec2(uTime * 0.35, uTime * 0.76));',
+      '    float r2 = vnoise(P * vec2(5.0, 11.0) - vec2(uTime * 0.62, uTime * 0.28));',
       '    float rip = (r1 * 0.6 + r2 * 0.4) - 0.5;',
       '    float calm = mix(1.0, 0.35, far);',
       '    w *= 1.0 + rip * 0.42 * calm;',
       // The glint is the only part of this water bright enough to show movement at this distance, so it is the part that is animated: the
       // highlight slides a little as the swell turns and brightens and dims as it catches and loses the sun. The water's pattern, colours
       // and amplitudes stay the site's.
-      '    float gslide = 1.9 * sin(uTime * 0.55) + 0.7 * sin(uTime * 1.7 + 2.0);',
-      '    float gbreathe = 0.80 + 0.32 * sin(uTime * 0.9 + 1.1);',
+      '    float gslide = 1.9 * sin(uTime * 0.63) + 0.7 * sin(uTime * 1.95 + 2.0);',
+      '    float gbreathe = 0.80 + 0.32 * sin(uTime * 1.04 + 1.1);',
       '    float glint = exp(-pow((az + 18.0 + gslide) / 14.0, 2.0)) * exp(-pow((el + 0.8 + gslide * 0.22) / 0.8, 2.0)) * (1.0 - t);',
       '    glint *= gbreathe;',
       '    float sparkle = smoothstep(0.52, 0.86, r1 * 0.5 + r2 * 0.5 + 0.12 * calm);',
