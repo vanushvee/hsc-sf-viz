@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Haight Street Compute — plate</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
+<!-- plate/index.html v1.0.0 (15 Nov 2026): the desk and the view out of its window, with nothing of the page on them, for a projector.
+     ?scene=desk (the default) is the room, the desk and the Mac; ?scene=sky is the skyline alone. Parameters: plate/README.md. -->
+<script type="importmap">
+{ "imports": {
+  "three": "./vendor/three/build/three.module.min.js",
+  "three/addons/": "./vendor/three/examples/jsm/"
+} }
+</script>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  #gl { display: block; width: 100vw; height: 100vh; cursor: none; }
+  /* the HUD is off unless ?hud=1: a projector gets the picture alone */
+  #hud {
+    position: fixed; left: 12px; bottom: 10px; margin: 0; padding: 2px 6px;
+    font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: #e6d9c8;
+    background: rgba(0, 0, 0, .45); border-radius: 3px; pointer-events: none; white-space: pre;
+  }
+  /* black until the scene is in, then a slow fade up: no flash on a projector */
+  #veil { position: fixed; inset: 0; background: #000; pointer-events: none; opacity: 1; transition: opacity 1.6s ease; }
+  html[data-ready="1"] #veil { opacity: 0; }
+  /* a failed build lifts the veil too: a black room is better than a black rectangle */
+  html[data-failed="1"] #veil { opacity: 0; }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="veil"></div>
+<pre id="hud" hidden></pre>
+<script type="module" src="./plate.js"></script>
+</body>
+</html>
