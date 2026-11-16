@@ -2,7 +2,8 @@
 
 The site's scene with nothing of the page on it, for a projector (or a TouchDesigner Web Render TOP).
 
-Live at **https://vanushvee.github.io/hsc-sf-viz/** (GitHub Pages, deployed from `main` by `.github/workflows/pages.yml`).
+Live at **https://vanushvee.github.io/hsc-sf-viz/** — GitHub Pages, published from `main` at the repo root (`.nojekyll` is present so
+Pages serves the files as they are). Push to `main` and Pages rebuilds; a build takes about a minute.
 
 ```bash
 npx serve .            # or: python3 -m http.server 8010
@@ -108,3 +109,33 @@ full extra pass. For a window you look *out* of, the reflection is the part that
 - The page is `noindex`: it is a plate for a projector, not a page for search engines.
 - Everything in the frame is procedural except the `.glb` models: the sky, the sun, the haze, the water, the beacons and the grade are
   shaders. Model credits are in the site's own list (`index.html`, `CREDIT_LINES`).
+
+## Deploying
+
+Pages is set to **Deploy from a branch: `main`, `/` (root)**, and `.nojekyll` keeps Pages from running the files through Jekyll.
+
+If you would rather deploy with a workflow (so builds are logged and cancellable), the repo's `gh` token needs the `workflow` scope
+(`gh auth refresh -h github.com -s workflow`) and then:
+
+```yaml
+# .github/workflows/pages.yml
+name: Pages
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+permissions: { contents: read, pages: write, id-token: write }
+concurrency: { group: pages, cancel-in-progress: true }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: "${{ steps.deployment.outputs.page_url }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: . }
+      - id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+…and switch Pages' source to GitHub Actions (`gh api -X PUT repos/vanushvee/hsc-sf-viz/pages -f build_type=workflow`).
