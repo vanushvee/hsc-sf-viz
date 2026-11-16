@@ -1,4 +1,4 @@
-// plate/plate.js v1.0.0 (15 Nov 2026): the projector plate — the site's scene with nothing of the page on it.
+// plate/plate.js v1.1.0 (15 Nov 2026): the projector plate — the site's scene with nothing of the page on it.
 //   ?scene=desk (default): the room, the desk with its keyboard, the in-tray, the lamp and the Macintosh with its screen dark, at the
 //                          site's seated view, panning slowly left and right.
 //   ?scene=sky:            just the view out of the window, for a clean skyline plate.
@@ -6,15 +6,20 @@
 // flare + vignette + grain). See README.md for the parameters and the TouchDesigner setup.
 //
 // URL parameters (all optional):
-//   scene=desk|sky       what to draw (default desk).
-//   pan, panTime         the slow sweep: degrees either side, and seconds per cycle (default 6 and 90; pan=0 is still).
-//   fov, yaw, pitch      camera overrides in degrees; without them the scene's own framing is used (desk: 38 and -11; sky: 40 and -5.5).
-//   screen, screenlight  the Mac's screen colour (default #050506, dark) and its spill light on the room (default 1.2; the site runs 3.0).
-//   flare, bar           anamorphic flare strength (0..1) and its vertical bar (0..0.5). Default 0.6 / 0.
+//   scene                room (default) | desk | sky — what to draw.
+//   parallax, panTime    the motion: metres the eye dollies across the glass per cycle (0.20), and seconds per cycle (82).
+//   back                 metres the eye sits back from the site's seat (0.30; 0 is the seat itself, nearly at the glass).
+//   pan                  the old head-turn, degrees either side (0 by default: the dolly is the motion).
+//   fov, yaw, pitch      camera overrides in degrees; otherwise the scene's own framing (room -5, desk -11, sky -5.5; fov 38, sky 40).
+//   dirty, glass         the pane: how dirty, 0..100 (50), and how much pane there is, 0 = a clean opening (1).
+//   screen, screenlight  the Mac's screen colour (#050506) and the spill light it throws (1.2; the site runs a lit screen at 3.0).
+//   flare, bar           the lens flare, 0..100 (40), and its vertical bar element, 0..0.5 (0).
 //   bloom, exposure, vig, grain   post: 0.32, 0.72, 0.28, 0.035.
-//   dpr, w, h            render density and forced size (stills).
-//   fps, t, still=1, hud=1, sun=0   as in the skyline plate.
-// window.skyline = { ready, render(t), stats(), capture(), scene, camera, renderer } for a capture script.
+//   haze                 multiplies the skyline's per-layer haze density (3.5; the site runs 1).
+//   birds, bird          the flock's size (130) and the birds' colour (#ece7dc).
+//   dpr, w, h            render density, and a forced render size for stills.
+//   fps, t, still=1, hud=1, sun=0   frame cap (60), start time, one frame and stop, readout, no sun.
+// window.plate = { ready, P, render(t), stats(), capture(), scene, camera, renderer, desk, flock } for a capture script.
 import * as THREE from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -36,7 +41,7 @@ const DEFAULTS = KIND === 'desk' ? { fov: 38, pitch: -11, parallax: 0.22 }
 const P = {
   kind: KIND,
   fov: num('fov', DEFAULTS.fov), yaw: num('yaw', 0), pitch: num('pitch', DEFAULTS.pitch),
-  pan: Math.max(0, num('pan', num('drift', 0))), panTime: Math.max(10, num('panTime', num('driftTime', 90))),
+  pan: Math.max(0, num('pan', num('drift', 0))), panTime: Math.max(10, num('panTime', num('driftTime', 82))),   // 82 not 90: the dolly runs 10% faster than it first did
   parallax: Math.max(0, num('parallax', DEFAULTS.parallax)),   // metres the eye dollies across the window: 0 is still
   back: num('back', 0.3),                                       // metres the eye sits back from the site's seat (0 = the seat)
   screen: QS.get('screen') || '#050506', screenLight: Math.max(0, num('screenlight', 1.2)),
@@ -45,7 +50,7 @@ const P = {
   birdTone: QS.get('bird') || '#ece7dc',                 // the birds' colour: cockatoo white by default (was a dark silhouette)
   glass: Math.max(0, num('glass', 1)),   // how much window is on the pane: tint, sheen, smudges, dust (0 = clean)
   dirty: Math.max(0, Math.min(100, num('dirty', 50))) / 100,   // 0..100: how dirty the pane is (50 = as drawn)
-  flareRaw: Math.max(0, Math.min(100, num('flare', 60))),       // 0..100: the lens flare's strength
+  flareRaw: Math.max(0, Math.min(100, num('flare', 40))),       // 0..100: the lens flare's strength
   flare: 0, bar: Math.min(0.5, Math.max(0, num('bar', 0))),
   bloom: Math.max(0, num('bloom', 0.32)), exposure: Math.max(0.01, num('exposure', 0.72)),
   vig: Math.min(1, Math.max(0, num('vig', 0.28))), grain: Math.max(0, num('grain', 0.035)),

@@ -1,4 +1,4 @@
-# hsc-sf-viz <!-- v1.0.0 (15 Nov 2026) -->
+# hsc-sf-viz <!-- v1.1.0 (15 Nov 2026) -->
 
 The site's scene with nothing of the page on it, for a projector (or a TouchDesigner Web Render TOP).
 
@@ -38,14 +38,14 @@ lifted from the desk scene in the hscompute.com repo, with the line numbers in t
 | `scene` | `room` | `room`, `desk` or `sky`. |
 | `back` | `0.30` | metres the eye sits back from the site's seat. `0` is the seat itself (nearly at the glass); `0.7` stands back in the room with two mullions in frame. |
 | `parallax` | `0.20` | metres the eye dollies sideways per cycle, across the window. This is the motion: the eye travels instead of turning, so the near city slides against the far shore. `0` is a still frame. |
-| `pan`, `panTime` | `0`, `90` | `panTime` is seconds per cycle; `pan` adds the old head-turn (degrees either side) on top of the dolly. |
+| `pan`, `panTime` | `0`, `82` | `panTime` is seconds per cycle; `pan` adds the old head-turn (degrees either side) on top of the dolly. |
 | `birds` | `130` | how many birds in the flock over the city; `0` is none. |
 | `glass` | `1` | how much window is on the pane; `0` is a clean opening. |
 | `dirty` | `50` | **0–100**: how dirty the pane is. `0` is freshly cleaned, `50` is the pane as drawn, `100` is a window nobody has touched since the building opened. |
 | `haze` | `3.5` | multiplies the skyline's per-layer haze density. `1` is the site's; higher pushes the far city further into the sky. |
 | `fov`, `yaw`, `pitch` | scene's own | camera overrides in degrees (desk: 38 and -11; sky: 40 and -5.5). |
 | `screen`, `screenlight` | `#050506`, `1.2` | the Mac's screen colour and the spill light it throws on the room (the site runs a lit screen at 3.0). |
-| `flare` | `60` | **0–100**: the lens flare. `0` is off; `100` is veiling glare, halation, a six-blade starburst, the anamorphic streak with its dispersion, and the element ghost train. |
+| `flare` | `40` | **0–100**: the lens flare. `0` is off; `100` is veiling glare, halation, a six-blade starburst, the anamorphic streak with its dispersion, and the element ghost train. |
 | `bar` | `0` | `0–0.5`: the flare's vertical bar element (off by default: it is a hard vertical line in the sky). |
 | `bloom`, `exposure`, `vig`, `grain` | `0.32`, `0.72`, `0.28`, `0.035` | the site's post values. Keep the grain: it dithers the sky gradient and stops banding on a projector. |
 | `dpr`, `w`, `h` | `min(dpr, 2)`, viewport | render density and a forced render size, for stills. |

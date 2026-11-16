@@ -43,7 +43,7 @@ stills/        two rendered plates, for a poster or a fallback
 
 ```
 ?parallax=0.2      metres the eye dollies across the glass per cycle (the motion)
-?panTime=90        seconds per cycle
+?panTime=82        seconds per cycle
 ?back=0.3          metres the eye sits back from the site's seat
 ?dirty=0..100      how dirty the pane is        ?flare=0..100   the lens flare
 ?birds=130         the flock's size, 0 = none   ?bird=%23ece7dc the birds' colour
