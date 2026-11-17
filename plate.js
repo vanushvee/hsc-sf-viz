@@ -1,4 +1,4 @@
-// plate/plate.js v1.2.0 (15 Nov 2026): the projector plate — the site's scene with nothing of the page on it.
+// plate/plate.js v1.2.1 (17 Nov 2026): the projector plate — the site's scene with nothing of the page on it.
 //   ?scene=desk (default): the room, the desk with its keyboard, the in-tray, the lamp and the Macintosh with its screen dark, at the
 //                          site's seated view, panning slowly left and right.
 //   ?scene=sky:            just the view out of the window, for a clean skyline plate.
@@ -7,7 +7,7 @@
 //
 // URL parameters (all optional):
 //   scene                room (default) | desk | sky — what to draw.
-//   parallax, panTime    the motion: metres the eye dollies across the glass per cycle (0.20), and seconds per cycle (82).
+//   parallax, panTime    the motion: metres the eye dollies across the glass per cycle (0.22), and seconds per cycle (82).
 //   back                 metres the eye sits back from the site's seat (0.30; 0 is the seat itself, nearly at the glass).
 //   pan                  the old head-turn, degrees either side (0 by default: the dolly is the motion).
 //   fov, yaw, pitch      camera overrides in degrees; otherwise the scene's own framing (room -5, desk -11, sky -5.5; fov 38, sky 40).
@@ -36,9 +36,9 @@ const num = (k, d) => { const v = parseFloat(QS.get(k)); return isFinite(v) ? v 
 const SCENE = (QS.get('scene') || 'room').toLowerCase();
 const KIND = SCENE === 'sky' ? 'sky' : SCENE === 'desk' ? 'desk' : 'room';
 // the motion is a parallax dolly, not a pan: the eye travels a little across the window so the near city slides against the far one
-const DEFAULTS = KIND === 'desk' ? { fov: 38, pitch: -11, parallax: 0.22 }
-  : KIND === 'room' ? { fov: 38, pitch: -5, parallax: 0.20 }   // the window and the city, aimed a little higher than the desk's seat
-  : { fov: 40, pitch: -5.5, parallax: 0.30 };
+const DEFAULTS = KIND === 'desk' ? { fov: 38, pitch: -11, parallax: 0.24 }
+  : KIND === 'room' ? { fov: 38, pitch: -5, parallax: 0.22 }   // the window and the city, aimed a little higher than the desk's seat
+  : { fov: 40, pitch: -5.5, parallax: 0.33 };
 const P = {
   kind: KIND,
   fov: num('fov', DEFAULTS.fov), yaw: num('yaw', 0), pitch: num('pitch', DEFAULTS.pitch),
