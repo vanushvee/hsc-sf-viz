@@ -42,8 +42,8 @@ stills/        two rendered plates, for a poster or a fallback
 `?scene=room` (default) · `?scene=desk` · `?scene=sky`. Everything is optional and documented in `README.md`; the ones that get used:
 
 ```
-?parallax=0.22     metres the eye dollies across the glass per cycle (the motion)
-?panTime=82        seconds per cycle
+?parallax=0.2      metres the eye dollies across the glass per cycle (the motion)
+?panTime=74.5      seconds per cycle
 ?back=0.3          metres the eye sits back from the site's seat
 ?dirty=0..100      how dirty the pane is        ?flare=0..100   the lens flare
 ?laser=0..100      the beam off the Pyramid, rides the beacon, 0 = off

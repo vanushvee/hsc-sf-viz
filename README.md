@@ -37,8 +37,8 @@ lifted from the desk scene in the hscompute.com repo, with the line numbers in t
 |---|---|---|
 | `scene` | `room` | `room`, `desk` or `sky`. |
 | `back` | `0.30` | metres the eye sits back from the site's seat. `0` is the seat itself (nearly at the glass); `0.7` stands back in the room with two mullions in frame. |
-| `parallax` | `0.22` | metres the eye dollies sideways per cycle, across the window. This is the motion: the eye travels instead of turning, so the near city slides against the far shore. `0` is a still frame. |
-| `pan`, `panTime` | `0`, `82` | `panTime` is seconds per cycle; `pan` adds the old head-turn (degrees either side) on top of the dolly. |
+| `parallax` | `0.20` | metres the eye dollies sideways per cycle, across the window. This is the motion: the eye travels instead of turning, so the near city slides against the far shore. `0` is a still frame. |
+| `pan`, `panTime` | `0`, `74.5` | `panTime` is seconds per cycle; `pan` adds the old head-turn (degrees either side) on top of the dolly. |
 | `laser` | `0` | **0–100**: a laser off the Pyramid's spire. It turns about the spire (one revolution every 14 s) and rides the beacon: it comes up with the flash and fades as the flash decays, so each blink shows a fresh arc of the sweep. The sweep runs just below horizontal — the spire's tip is within a few percent of the top of the frame, so a beam at or above horizontal leaves the picture at once — and it dims as it turns to face the eye, where a laser would only smear across the glass. Off by default. |
 | `birds` | `130` | how many birds in the flock over the city; `0` is none. |
 | `glass` | `1` | how much window is on the pane; `0` is a clean opening. |
@@ -63,7 +63,7 @@ URL), and `scene` / `camera` / `renderer` / `desk`.
 
 1. Add a **Web Render TOP**.
 2. Resolution: 1920×1080 (or 3840×2160 if the machine can carry it; the page renders at whatever it is given).
-3. URL: `https://vanushvee.github.io/hsc-sf-viz/?parallax=0.22` (start the server first, or point it at a deployed copy).
+3. URL: `https://vanushvee.github.io/hsc-sf-viz/?parallax=0.2` (start the server first, or point it at a deployed copy).
 4. Let it cook every frame. The page animates on its own; no interaction is needed.
 5. If the TOP comes up black, its embedded browser has no GPU — WebGL must be enabled for TouchDesigner's browser and the machine needs
    hardware acceleration.
